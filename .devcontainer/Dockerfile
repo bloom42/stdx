@@ -1,6 +1,6 @@
 FROM golang:1.21 AS go
 
-FROM ubuntu:latest
+FROM debian:12
 
 RUN apt update && apt upgrade -y
 RUN apt install -y git ca-certificates make vim \
