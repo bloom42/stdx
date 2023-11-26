@@ -4,14 +4,14 @@ go 1.21
 
 require (
 	github.com/alecthomas/chroma/v2 v2.11.1
-	github.com/aws/aws-sdk-go v1.48.0
+	github.com/aws/aws-sdk-go v1.48.3
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/inconshreveable/mousetrap v1.1.0
 	github.com/jackc/pgx/v5 v5.5.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/klauspost/cpuid/v2 v2.2.6
-	github.com/minio/minio-go/v7 v7.0.63
+	github.com/minio/minio-go/v7 v7.0.64
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.21
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
