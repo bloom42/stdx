@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/alecthomas/chroma/v2 v2.11.1
-	github.com/aws/aws-sdk-go v1.48.3
+	github.com/aws/aws-sdk-go v1.48.9
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/inconshreveable/mousetrap v1.1.0
@@ -17,11 +17,11 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/yuin/goldmark v1.6.0
 	github.com/zeebo/blake3 v0.2.3
-	golang.org/x/crypto v0.15.0
+	golang.org/x/crypto v0.16.0
 	golang.org/x/image v0.14.0
 	golang.org/x/mod v0.14.0
-	golang.org/x/sys v0.14.0
-	golang.org/x/term v0.14.0
+	golang.org/x/sys v0.15.0
+	golang.org/x/term v0.15.0
 )
 
 require (
@@ -45,7 +45,7 @@ require (
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
