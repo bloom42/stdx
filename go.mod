@@ -3,8 +3,8 @@ module github.com/bloom42/stdx
 go 1.21
 
 require (
-	github.com/alecthomas/chroma/v2 v2.11.1
-	github.com/aws/aws-sdk-go v1.48.11
+	github.com/alecthomas/chroma/v2 v2.12.0
+	github.com/aws/aws-sdk-go v1.48.16
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/inconshreveable/mousetrap v1.1.0
