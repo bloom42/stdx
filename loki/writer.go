@@ -1,6 +1,7 @@
 package loki
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -98,10 +99,7 @@ func (writer *Writer) Write(data []byte) (n int, err error) {
 	}
 
 	// if log finishes by '\n' we trim it
-	dataLength := len(data)
-	if dataLength != 0 && data[dataLength] == '\n' {
-		data = data[:dataLength-1]
-	}
+	data = bytes.TrimSuffix(data, []byte("\n"))
 
 	record := record{
 		timestamp: time.Now().UTC(),
