@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/bloom42/stdx/httputils"
@@ -34,6 +35,7 @@ type Handler struct {
 	recordsBufferMutex sync.Mutex
 	childHandler       slog.Handler
 	writer             io.Writer
+	stopped            atomic.Bool
 }
 
 type record struct {
@@ -61,13 +63,28 @@ func NewHandler(options Options) *Handler {
 		recordsBuffer:      make([]record, 0, defaultRecordsBufferSize),
 		recordsBufferMutex: sync.Mutex{},
 		childHandler:       nil,
+		stopped:            atomic.Bool{},
 	}
+	handler.stopped.Store(false)
 
 	if options.Json {
 		handler.childHandler = slog.NewJSONHandler(handler, nil)
 	} else {
 		handler.childHandler = slog.NewTextHandler(handler, nil)
 	}
+
+	go func() {
+		sleepFor := 100 * time.Millisecond
+		for {
+			if handler.stopped.Load() && sleepFor == 100*time.Millisecond {
+				sleepFor = 15 * time.Millisecond
+			}
+
+			<-time.After(sleepFor)
+
+			handler.flushLogs(context.Background())
+		}
+	}()
 
 	return handler
 }
@@ -105,4 +122,8 @@ func (handler *Handler) WithGroup(name string) slog.Handler {
 func (handler *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	handler.childHandler = handler.childHandler.WithAttrs(attrs)
 	return handler
+}
+
+func (handler *Handler) Stop() {
+	handler.stopped.Store(true)
 }
