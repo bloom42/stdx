@@ -67,7 +67,7 @@ func (writer *Writer) flushLogs(ctx context.Context) (err error) {
 	}
 
 	req.Header.Add(httputils.HeaderContentType, httputils.MediaTypeJson)
-	req.Header.Add(httputils.HeaderContentEncoding, "gzip")
+	// req.Header.Add(httputils.HeaderContentEncoding, "gzip")
 
 	res, err := writer.httpClient.Do(req)
 	if err != nil {
