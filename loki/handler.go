@@ -20,14 +20,14 @@ type Options struct {
 	// also prints the logs to stdout
 	Silent  bool
 	Streams map[string]string
-	Level   slog.Level
+	Level   slog.Leveler
 }
 
 type Handler struct {
 	endpoint string
 	stdout   io.Writer
 	streams  map[string]string
-	level    slog.Level
+	level    slog.Leveler
 
 	httpClient         *http.Client
 	recordsBuffer      []record
@@ -70,7 +70,7 @@ func NewHandler(options Options) *Handler {
 }
 
 func (handler *Handler) Enabled(_ context.Context, level slog.Level) bool {
-	return level >= handler.level
+	return level >= handler.level.Level()
 }
 
 func (handler *Handler) Handle(ctx context.Context, slogRecord slog.Record) error {
