@@ -91,6 +91,12 @@ func (writer *Writer) Write(data []byte) (n int, err error) {
 		return
 	}
 
+	// if log finishes by '\n' we trim it
+	dataLength := len(data)
+	if dataLength != 0 && data[dataLength] == '\n' {
+		data = data[:dataLength-1]
+	}
+
 	record := record{
 		timestamp: time.Now().UTC(),
 		message:   string(data),
