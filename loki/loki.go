@@ -24,8 +24,6 @@ type lokiPushStream struct {
 
 // https://grafana.com/docs/loki/latest/reference/api/#push-log-entries-to-loki
 func (handler *Handler) flushLogs(ctx context.Context) (err error) {
-	fmt.Println("FLUSHING LOGS")
-	return
 	handler.recordsBufferMutex.Lock()
 
 	if len(handler.recordsBuffer) == 0 {
@@ -37,6 +35,10 @@ func (handler *Handler) flushLogs(ctx context.Context) (err error) {
 	copy(recordsBufferCopy, handler.recordsBuffer)
 	handler.recordsBuffer = make([]record, 0, defaultRecordsBufferSize)
 	handler.recordsBufferMutex.Unlock()
+
+	if handler.endpoint == "" {
+		return
+	}
 
 	defer func() {
 		if err != nil {
