@@ -83,6 +83,12 @@ func NewWriter(options WriterOptions) *Writer {
 	return handler
 }
 
+// SetEndpoint sets the loki endpoint. This method IS NOT thread safe.
+// It should be used just after config is loaded
+func (writer *Writer) SetEndpoint(lokiEndpoint string) {
+	writer.lokiEndpoint = lokiEndpoint
+}
+
 func (writer *Writer) Write(data []byte) (n int, err error) {
 	// TODO: handle error?
 	_, _ = writer.childWriter.Write(data)
