@@ -2,7 +2,6 @@ package loki
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -51,14 +50,14 @@ func (writer *Writer) flushLogs(ctx context.Context) (err error) {
 
 	// Marshal records to gzipped JSON
 	body := bytes.NewBuffer(make([]byte, len(recordsBufferCopy)*100))
-	gzipWriter := gzip.NewWriter(body)
-	jsonEncoder := json.NewEncoder(gzipWriter)
+	// gzipWriter := gzip.NewWriter(body)
+	jsonEncoder := json.NewEncoder(body)
 	jsonEncoder.Encode(convertRecords(writer.streams, recordsBufferCopy))
-	err = gzipWriter.Close()
-	if err != nil {
-		err = fmt.Errorf("loki: flushing logs: error closing the Gzip writer: %w", err)
-		return
-	}
+	// err = gzipWriter.Close()
+	// if err != nil {
+	// 	err = fmt.Errorf("loki: flushing logs: error closing the Gzip writer: %w", err)
+	// 	return
+	// }
 
 	pushLogsEndpoint := writer.lokiEndpoint
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, pushLogsEndpoint, body)
