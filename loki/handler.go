@@ -32,7 +32,7 @@ type Handler struct {
 	httpClient         *http.Client
 	recordsBuffer      []record
 	recordsBufferMutex sync.Mutex
-	textHandler        *slog.TextHandler
+	textHandler        slog.Handler
 }
 
 type record struct {
@@ -90,4 +90,16 @@ func (handler *Handler) Write(data []byte) (n int, err error) {
 	handler.recordsBufferMutex.Unlock()
 
 	return
+}
+
+// TODO: make copy?
+func (handler *Handler) WithGroup(name string) slog.Handler {
+	handler.textHandler = handler.textHandler.WithGroup(name)
+	return handler
+}
+
+// TODO: make copy?
+func (handler *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	handler.textHandler = handler.textHandler.WithAttrs(attrs)
+	return handler
 }
