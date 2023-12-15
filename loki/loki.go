@@ -78,6 +78,7 @@ func (writer *Writer) flushLogs(ctx context.Context) (err error) {
 	var resBuffer bytes.Buffer
 	_, _ = io.Copy(&resBuffer, res.Body)
 	res.Body.Close()
+	fmt.Println("LOGS SENT")
 	fmt.Println(resBuffer.String())
 
 	return
