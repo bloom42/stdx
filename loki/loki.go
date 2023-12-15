@@ -81,11 +81,9 @@ func (writer *Writer) flushLogs(ctx context.Context) (err error) {
 		err = fmt.Errorf("loki: flushing logs: making HTTP request: %w", err)
 		return err
 	}
-	var resBuffer bytes.Buffer
-	_, _ = io.Copy(&resBuffer, res.Body)
+	// var resBuffer bytes.Buffer
+	_, _ = io.Copy(io.Discard, res.Body)
 	res.Body.Close()
-	fmt.Println("LOGS SENT")
-	fmt.Println(resBuffer.String())
 
 	return
 }

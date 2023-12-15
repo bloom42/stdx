@@ -3,7 +3,6 @@ package loki
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -78,10 +77,7 @@ func NewWriter(options WriterOptions) *Writer {
 				}
 			}
 			<-time.After(sleepFor)
-			errFlushing := handler.flushLogs(context.Background())
-			if errFlushing != nil {
-				fmt.Println(errFlushing)
-			}
+			handler.flushLogs(context.Background())
 		}
 	}()
 
