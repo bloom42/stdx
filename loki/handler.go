@@ -17,22 +17,23 @@ const defaultRecordsBufferSize = 100
 type Options struct {
 	// The loki enpoint
 	Endpoint string
-	// also prints the logs to stdout
+	// Don't print the logs to stdout
 	Silent  bool
+	Json    bool
 	Streams map[string]string
 	Level   slog.Leveler
 }
 
 type Handler struct {
 	endpoint string
-	stdout   io.Writer
 	streams  map[string]string
 	level    slog.Leveler
 
 	httpClient         *http.Client
 	recordsBuffer      []record
 	recordsBufferMutex sync.Mutex
-	textHandler        slog.Handler
+	childHandler       slog.Handler
+	writer             io.Writer
 }
 
 type record struct {
@@ -46,40 +47,42 @@ func NewHandler(options Options) *Handler {
 		streams = map[string]string{}
 	}
 
-	var stdout io.Writer = os.Stdout
+	var writer io.Writer = os.Stdout
 	if options.Silent {
-		stdout = io.Discard
+		writer = io.Discard
 	}
 
 	handler := &Handler{
 		endpoint: options.Endpoint,
-		stdout:   stdout,
+		writer:   writer,
 		streams:  streams,
-		level:    options.Level,
 
 		httpClient:         httputils.DefaultClient(),
 		recordsBuffer:      make([]record, 0, defaultRecordsBufferSize),
 		recordsBufferMutex: sync.Mutex{},
-		textHandler:        nil,
+		childHandler:       nil,
 	}
 
-	// TOO: circular reference: how it is for garbage collection?
-	handler.textHandler = slog.NewTextHandler(handler, &slog.HandlerOptions{Level: handler.level})
+	if options.Json {
+		handler.childHandler = slog.NewJSONHandler(handler, nil)
+	} else {
+		handler.childHandler = slog.NewTextHandler(handler, nil)
+	}
 
 	return handler
 }
 
-func (handler *Handler) Enabled(_ context.Context, level slog.Level) bool {
+func (handler *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 	return level >= handler.level.Level()
 }
 
 func (handler *Handler) Handle(ctx context.Context, slogRecord slog.Record) error {
-	return handler.textHandler.Handle(ctx, slogRecord)
+	return handler.childHandler.Handle(ctx, slogRecord)
 }
 
 func (handler *Handler) Write(data []byte) (n int, err error) {
 	// TODO: handle error?
-	_, _ = handler.stdout.Write(data)
+	_, _ = handler.writer.Write(data)
 	record := record{
 		timestamp: time.Now().UTC(),
 		message:   string(data),
@@ -94,12 +97,12 @@ func (handler *Handler) Write(data []byte) (n int, err error) {
 
 // TODO: make copy?
 func (handler *Handler) WithGroup(name string) slog.Handler {
-	handler.textHandler = handler.textHandler.WithGroup(name)
+	handler.childHandler = handler.childHandler.WithGroup(name)
 	return handler
 }
 
 // TODO: make copy?
 func (handler *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	handler.textHandler = handler.textHandler.WithAttrs(attrs)
+	handler.childHandler = handler.childHandler.WithAttrs(attrs)
 	return handler
 }
