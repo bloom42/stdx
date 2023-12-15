@@ -3,6 +3,7 @@ package httputils
 const (
 	HeaderLastModified            = "Last-Modified"
 	HeaderContentType             = "Content-Type"
+	HeaderContentEncoding         = "Content-Encoding"
 	HeaderCacheControl            = "Cache-Control"
 	HeaderContentLength           = "Content-Length"
 	HeaderETag                    = "ETag"
