@@ -51,9 +51,9 @@ func (writer *Writer) flushLogs(ctx context.Context) (err error) {
 
 	// Marshal records to gzipped JSON
 	payload := convertRecords(writer.streams, recordsBufferCopy)
-	// body := bytes.NewBuffer(make([]byte, len(recordsBufferCopy)*100))
-	var body bytes.Buffer
-	gzipWriter := gzip.NewWriter(&body)
+	body := bytes.NewBuffer(make([]byte, 0, len(recordsBufferCopy)*100))
+	// var body bytes.Buffer
+	gzipWriter := gzip.NewWriter(body)
 	jsonEncoder := json.NewEncoder(gzipWriter)
 	err = jsonEncoder.Encode(payload)
 	if err != nil {
@@ -67,7 +67,7 @@ func (writer *Writer) flushLogs(ctx context.Context) (err error) {
 	}
 
 	pushLogsEndpoint := writer.lokiEndpoint
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, pushLogsEndpoint, &body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, pushLogsEndpoint, body)
 	if err != nil {
 		err = fmt.Errorf("loki: flushing logs: error creating HTTP request: %w", err)
 		return
