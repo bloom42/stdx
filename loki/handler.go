@@ -23,6 +23,7 @@ type Options struct {
 	Json    bool
 	Streams map[string]string
 	Level   slog.Leveler
+	Ctx     context.Context
 }
 
 type Handler struct {
@@ -36,6 +37,7 @@ type Handler struct {
 	childHandler       slog.Handler
 	writer             io.Writer
 	stopped            atomic.Bool
+	ctx                context.Context
 }
 
 type record struct {
@@ -58,6 +60,10 @@ func NewHandler(options Options) *Handler {
 		options.Level = slog.LevelInfo
 	}
 
+	if options.Ctx == nil {
+		options.Ctx = context.Background()
+	}
+
 	handler := &Handler{
 		endpoint: options.Endpoint,
 		writer:   writer,
@@ -69,6 +75,7 @@ func NewHandler(options Options) *Handler {
 		recordsBufferMutex: sync.Mutex{},
 		childHandler:       nil,
 		stopped:            atomic.Bool{},
+		ctx:                options.Ctx,
 	}
 	handler.stopped.Store(false)
 
@@ -80,13 +87,18 @@ func NewHandler(options Options) *Handler {
 
 	go func() {
 		sleepFor := 100 * time.Millisecond
+		done := false
 		for {
-			if handler.stopped.Load() && sleepFor == 100*time.Millisecond {
-				sleepFor = 15 * time.Millisecond
+			if !done {
+				select {
+				case <-handler.ctx.Done():
+					done = true
+					// we sleep less to avoid losing logs
+					sleepFor = 10 * time.Millisecond
+				default:
+				}
 			}
-
 			<-time.After(sleepFor)
-
 			handler.flushLogs(context.Background())
 		}
 	}()
@@ -127,8 +139,4 @@ func (handler *Handler) WithGroup(name string) slog.Handler {
 func (handler *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	handler.childHandler = handler.childHandler.WithAttrs(attrs)
 	return handler
-}
-
-func (handler *Handler) Stop() {
-	handler.stopped.Store(true)
 }
