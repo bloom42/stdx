@@ -54,10 +54,15 @@ func NewHandler(options Options) *Handler {
 		writer = io.Discard
 	}
 
+	if options.Level == nil {
+		options.Level = slog.LevelInfo
+	}
+
 	handler := &Handler{
 		endpoint: options.Endpoint,
 		writer:   writer,
 		streams:  streams,
+		level:    options.Level,
 
 		httpClient:         httputils.DefaultClient(),
 		recordsBuffer:      make([]record, 0, defaultRecordsBufferSize),
