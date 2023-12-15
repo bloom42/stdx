@@ -23,43 +23,44 @@ type lokiPushStream struct {
 }
 
 // https://grafana.com/docs/loki/latest/reference/api/#push-log-entries-to-loki
-func (handler *Handler) flushLogs(ctx context.Context) (err error) {
-	handler.recordsBufferMutex.Lock()
+func (writer *Writer) flushLogs(ctx context.Context) (err error) {
+	writer.recordsBufferMutex.Lock()
 
-	if len(handler.recordsBuffer) == 0 {
-		handler.recordsBufferMutex.Unlock()
+	if len(writer.recordsBuffer) == 0 {
+		writer.recordsBufferMutex.Unlock()
 		return
 	}
 
-	recordsBufferCopy := make([]record, len(handler.recordsBuffer))
-	copy(recordsBufferCopy, handler.recordsBuffer)
-	handler.recordsBuffer = make([]record, 0, defaultRecordsBufferSize)
-	handler.recordsBufferMutex.Unlock()
+	recordsBufferCopy := make([]record, len(writer.recordsBuffer))
+	copy(recordsBufferCopy, writer.recordsBuffer)
+	writer.recordsBuffer = make([]record, 0, defaultRecordsBufferSize)
+	writer.recordsBufferMutex.Unlock()
 
-	if handler.endpoint == "" {
+	if writer.lokiEndpoint == "" {
 		return
 	}
 
-	defer func() {
-		if err != nil {
-			handler.recordsBufferMutex.Lock()
-			handler.recordsBuffer = append(handler.recordsBuffer, recordsBufferCopy...)
-			handler.recordsBufferMutex.Unlock()
-		}
-	}()
+	// TODO: as of now, if the HTTP request fail, we discard/lose the logs
+	// defer func() {
+	// 	if err != nil {
+	// 		writer.recordsBufferMutex.Lock()
+	// 		writer.recordsBuffer = append(writer.recordsBuffer, recordsBufferCopy...)
+	// 		writer.recordsBufferMutex.Unlock()
+	// 	}
+	// }()
 
 	// Marshal records to gzipped JSON
 	body := bytes.NewBuffer(make([]byte, len(recordsBufferCopy)*100))
 	gzipWriter := gzip.NewWriter(body)
 	jsonEncoder := json.NewEncoder(gzipWriter)
-	jsonEncoder.Encode(convertRecords(handler.streams, recordsBufferCopy))
+	jsonEncoder.Encode(convertRecords(writer.streams, recordsBufferCopy))
 	err = gzipWriter.Close()
 	if err != nil {
 		err = fmt.Errorf("loki: flushing logs: error closing the Gzip writer: %w", err)
 		return
 	}
 
-	pushLogsEndpoint := handler.endpoint + "/loki/api/v1/push"
+	pushLogsEndpoint := writer.lokiEndpoint
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, pushLogsEndpoint, body)
 	if err != nil {
 		err = fmt.Errorf("loki: flushing logs: error creating HTTP request: %w", err)
@@ -69,7 +70,7 @@ func (handler *Handler) flushLogs(ctx context.Context) (err error) {
 	req.Header.Add(httputils.HeaderContentType, httputils.MediaTypeJson)
 	req.Header.Add(httputils.HeaderContentEncoding, "gzip")
 
-	res, err := handler.httpClient.Do(req)
+	res, err := writer.httpClient.Do(req)
 	if err != nil {
 		err = fmt.Errorf("loki: flushing logs: making HTTP request: %w", err)
 		return err
