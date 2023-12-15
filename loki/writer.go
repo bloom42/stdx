@@ -81,8 +81,6 @@ func NewWriter(options WriterOptions) *Writer {
 			errFlushing := handler.flushLogs(context.Background())
 			if errFlushing != nil {
 				fmt.Println(errFlushing)
-			} else {
-				fmt.Println("LOGS SENT")
 			}
 		}
 	}()
