@@ -17,9 +17,11 @@ type WriterOptions struct {
 	// The loki enpoint
 	LokiEndpoint string
 	ChildWriter  io.Writer
-	// DefaultRecordsBufferSize is your number of `(logs per second) / 5`
+	// DefaultRecordsBufferSize is your number of `(logs per second) / (1000 / FlushTimeout)`
 	DefaultRecordsBufferSize   uint32
 	EmptyEndpointMaxBufferSize uint32
+	// FlushTimeout in ms
+	FlushTimeout uint32
 }
 
 type Writer struct {
@@ -27,6 +29,7 @@ type Writer struct {
 	streams                    map[string]string
 	defaultRecordsBufferSize   uint32
 	emptyEndpointMaxBufferSize uint32
+	flushTimeout               uint32
 
 	httpClient         *http.Client
 	recordsBuffer      []record
@@ -58,17 +61,21 @@ func NewWriter(ctx context.Context, lokiEndpoint string, streams map[string]stri
 		if options.EmptyEndpointMaxBufferSize == 0 {
 			options.EmptyEndpointMaxBufferSize = defaultOptions.EmptyEndpointMaxBufferSize
 		}
+		if options.FlushTimeout == 0 {
+			options.FlushTimeout = options.FlushTimeout
+		}
 	}
 
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	handler := &Writer{
+	writer := &Writer{
 		lokiEndpoint:               lokiEndpoint,
 		streams:                    streams,
 		defaultRecordsBufferSize:   options.DefaultRecordsBufferSize,
 		emptyEndpointMaxBufferSize: options.EmptyEndpointMaxBufferSize,
+		flushTimeout:               options.FlushTimeout,
 
 		httpClient:         httpx.DefaultClient(),
 		recordsBuffer:      make([]record, 0, options.DefaultRecordsBufferSize),
@@ -80,20 +87,20 @@ func NewWriter(ctx context.Context, lokiEndpoint string, streams map[string]stri
 	go func() {
 		done := false
 		for {
-			if !done {
-				select {
-				case <-handler.ctx.Done():
-					done = true
-				case <-time.After(200 * time.Millisecond):
-				}
-			} else {
+			if done {
 				// we sleep less to avoid losing logs
 				time.Sleep(20 * time.Millisecond)
+			} else {
+				select {
+				case <-writer.ctx.Done():
+					done = true
+				case <-time.After(time.Duration(writer.flushTimeout) * time.Millisecond):
+				}
 			}
 
 			go func() {
 				// TODO: as of now, if the HTTP request fail after X retries, we discard/lose the logs
-				err := handler.flushLogs(context.Background())
+				err := writer.flushLogs(context.Background())
 				if err != nil {
 					log.Println(err.Error())
 					return
@@ -107,7 +114,7 @@ func NewWriter(ctx context.Context, lokiEndpoint string, streams map[string]stri
 		}
 	}()
 
-	return handler
+	return writer
 }
 
 func defaultOptions() *WriterOptions {
@@ -116,6 +123,7 @@ func defaultOptions() *WriterOptions {
 		ChildWriter:                os.Stdout,
 		DefaultRecordsBufferSize:   100,
 		EmptyEndpointMaxBufferSize: 200,
+		FlushTimeout:               200,
 	}
 }
 
