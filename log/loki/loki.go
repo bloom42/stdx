@@ -35,6 +35,7 @@ func (writer *Writer) flushLogs(ctx context.Context) (err error) {
 
 	recordsBufferCopy := make([]record, len(writer.recordsBuffer))
 	copy(recordsBufferCopy, writer.recordsBuffer)
+	fmt.Printf("len(recordsBufferCopy) = %d\n", len(recordsBufferCopy))
 	writer.recordsBuffer = make([]record, 0, writer.defaultRecordsBufferSize)
 	writer.recordsBufferMutex.Unlock()
 

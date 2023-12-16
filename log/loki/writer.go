@@ -14,13 +14,19 @@ import (
 )
 
 type WriterOptions struct {
-	// The loki enpoint
 	LokiEndpoint string
-	ChildWriter  io.Writer
-	// DefaultRecordsBufferSize is your number of `(logs per second) / (1000 / FlushTimeout)`
-	DefaultRecordsBufferSize   uint32
+	// ChildWriter is used to pass logs to another writer
+	// default: os.Stdout
+	ChildWriter io.Writer
+	// DefaultRecordsBufferSize is your expected number of `(logs per second) / (1000 / FlushTimeout)`
+	// default: 100
+	DefaultRecordsBufferSize uint32
+	// EmptyEndpointMaxBufferSize is the number of logs to buffer if LokiEndpoint == "".
+	// it's useful if you log a few things before your config with the loki endpoint is full loaded
+	// default: 200
 	EmptyEndpointMaxBufferSize uint32
 	// FlushTimeout in ms
+	// default: 200
 	FlushTimeout uint32
 }
 
