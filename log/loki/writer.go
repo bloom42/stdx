@@ -62,7 +62,7 @@ func NewWriter(ctx context.Context, lokiEndpoint string, streams map[string]stri
 			options.EmptyEndpointMaxBufferSize = defaultOptions.EmptyEndpointMaxBufferSize
 		}
 		if options.FlushTimeout == 0 {
-			options.FlushTimeout = options.FlushTimeout
+			options.FlushTimeout = defaultOptions.FlushTimeout
 		}
 	}
 
