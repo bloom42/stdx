@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bloom42/stdx/filesutil"
+	"github.com/bloom42/stdx/filex"
 	"github.com/bloom42/stdx/zign"
 )
 
@@ -44,7 +44,7 @@ func CreateRelease(ctx context.Context, info CreateReleaseInput) (release Releas
 		var fileHandle *os.File
 		filename := filepath.Base(file)
 
-		fileExists, err = filesutil.Exists(file)
+		fileExists, err = filex.Exists(file)
 		if err != nil {
 			err = fmt.Errorf("selfupdate: checking if file exists (%s): %w", file, err)
 			return

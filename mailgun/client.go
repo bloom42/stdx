@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/bloom42/stdx/httputils"
+	"github.com/bloom42/stdx/httpx"
 )
 
 type Client struct {
@@ -19,7 +19,7 @@ type Client struct {
 
 func NewClient(apiKey string, httpClient *http.Client) *Client {
 	if httpClient == nil {
-		httpClient = httputils.DefaultClient()
+		httpClient = httpx.DefaultClient()
 	}
 
 	return &Client{
@@ -57,9 +57,9 @@ func (client *Client) request(ctx context.Context, params requestParams, dst int
 		req.Body = io.NopCloser(bytes.NewBuffer(payloadData))
 	}
 
-	req.Header.Add(httputils.HeaderAccept, httputils.MediaTypeJson)
-	req.Header.Add(httputils.HeaderContentType, httputils.MediaTypeJson)
-	req.Header.Add(httputils.HeaderUserAgent, "mailgun-go/4.6.1")
+	req.Header.Add(httpx.HeaderAccept, httpx.MediaTypeJson)
+	req.Header.Add(httpx.HeaderContentType, httpx.MediaTypeJson)
+	req.Header.Add(httpx.HeaderUserAgent, "mailgun-go/4.6.1")
 	req.SetBasicAuth("api", client.apiKey)
 
 	res, err := client.httpClient.Do(req)

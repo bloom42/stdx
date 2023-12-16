@@ -247,7 +247,7 @@ func (pgqueue *PostgreSQLQueue) failTimedOutJobs(ctx context.Context) {
 	// 		queue.JobStatusRunning, now, scheduledFor, failedAttempt, job.ID)
 
 	// 		if err != nil {
-	// 	queue.logger.Error("queue.failTimedOutJobs: updating timedout jobs", slogutil.Err(err))
+	// 	queue.logger.Error("queue.failTimedOutJobs: updating timedout jobs", slogx.Err(err))
 	// 	return
 	// }
 

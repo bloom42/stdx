@@ -11,7 +11,7 @@ import (
 
 	"github.com/bloom42/stdx/cobra"
 	"github.com/bloom42/stdx/crypto"
-	"github.com/bloom42/stdx/filesutil"
+	"github.com/bloom42/stdx/filex"
 	"github.com/bloom42/stdx/zign"
 	"golang.org/x/term"
 )
@@ -154,7 +154,7 @@ var signCmd = &cobra.Command{
 			fileExists := false
 			var fileHandle *os.File
 
-			fileExists, err = filesutil.Exists(file)
+			fileExists, err = filex.Exists(file)
 			if err != nil {
 				err = fmt.Errorf("checking if file exists (%s): %w", file, err)
 				return
@@ -232,7 +232,7 @@ var verifyCmd = &cobra.Command{
 			var fileHandle *os.File
 			var sha256Hash []byte
 
-			fileExists, err = filesutil.Exists(file.Filename)
+			fileExists, err = filex.Exists(file.Filename)
 			if err != nil {
 				err = fmt.Errorf("checking if file exists (%s): %w", file.Filename, err)
 				return

@@ -10,7 +10,7 @@ import (
 	"log/slog"
 
 	"github.com/bloom42/stdx/db"
-	"github.com/bloom42/stdx/slogutil"
+	"github.com/bloom42/stdx/log/slogx"
 )
 
 type Migration struct {
@@ -20,7 +20,7 @@ type Migration struct {
 }
 
 func Migrate(ctx context.Context, db db.DB, migrations []Migration) (err error) {
-	logger := slogutil.FromCtx(ctx)
+	logger := slogx.FromCtx(ctx)
 	if logger == nil {
 		err = errors.New("migrate.Migrate: logger is missing from context")
 		return
@@ -85,7 +85,7 @@ func Migrate(ctx context.Context, db db.DB, migrations []Migration) (err error) 
 
 // Rollback undo the latest migration
 func Rollback(ctx context.Context, db db.DB, migrations []Migration, numberToRollback int64) (err error) {
-	logger := slogutil.FromCtx(ctx)
+	logger := slogx.FromCtx(ctx)
 	if logger == nil {
 		err = errors.New("migrate.Rollback: logger is missing from context")
 		return

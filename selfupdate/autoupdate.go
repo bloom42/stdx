@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/bloom42/stdx/slogutil"
+	"github.com/bloom42/stdx/log/slogx"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 )
 
 func (updater *Updater) RunAutoupdateInBackground(ctx context.Context) {
-	logger := slogutil.FromCtx(ctx)
+	logger := slogx.FromCtx(ctx)
 	var err error
 	var manifest ChannelManifest
 
@@ -37,7 +37,7 @@ func (updater *Updater) RunAutoupdateInBackground(ctx context.Context) {
 
 			manifest, err = updater.CheckUpdate(ctx)
 			if err != nil {
-				logger.Warn("selfupdate: error while checking for update", slogutil.Err(err))
+				logger.Warn("selfupdate: error while checking for update", slogx.Err(err))
 				continue
 			}
 
@@ -49,7 +49,7 @@ func (updater *Updater) RunAutoupdateInBackground(ctx context.Context) {
 
 				err = updater.Update(ctx, manifest)
 				if err != nil {
-					logger.Warn("selfupdate: installing new version", slogutil.Err(err))
+					logger.Warn("selfupdate: installing new version", slogx.Err(err))
 					continue
 				}
 

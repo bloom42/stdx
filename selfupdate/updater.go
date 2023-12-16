@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/bloom42/stdx/httputils"
+	"github.com/bloom42/stdx/httpx"
 	"github.com/bloom42/stdx/semver"
 )
 
@@ -43,7 +43,7 @@ type Updater struct {
 
 func NewUpdater(config Config) (updater *Updater, err error) {
 	if config.HttpClient == nil {
-		config.HttpClient = httputils.DefaultClient()
+		config.HttpClient = httpx.DefaultClient()
 	}
 
 	if config.BaseURL == "" {

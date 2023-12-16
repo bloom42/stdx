@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/bloom42/stdx/httputils"
+	"github.com/bloom42/stdx/httpx"
 )
 
 type Client struct {
@@ -20,7 +20,7 @@ type Client struct {
 
 func NewClient(acountApiKey, streamApiKey string, httpClient *http.Client) *Client {
 	if httpClient == nil {
-		httpClient = httputils.DefaultClient()
+		httpClient = httpx.DefaultClient()
 	}
 
 	return &Client{
@@ -73,8 +73,8 @@ func (client *Client) request(ctx context.Context, params requestParams, dst int
 		apiKey = client.streamApiKey
 	}
 
-	req.Header.Add(httputils.HeaderAccept, httputils.MediaTypeJson)
-	req.Header.Add(httputils.HeaderContentType, httputils.MediaTypeJson)
+	req.Header.Add(httpx.HeaderAccept, httpx.MediaTypeJson)
+	req.Header.Add(httpx.HeaderContentType, httpx.MediaTypeJson)
 	req.Header.Add("AccessKey", apiKey)
 
 	res, err := client.httpClient.Do(req)
@@ -115,8 +115,8 @@ func (client *Client) upload(ctx context.Context, params uploadParams, dst inter
 		apiKey = client.streamApiKey
 	}
 
-	req.Header.Add(httputils.HeaderAccept, httputils.MediaTypeJson)
-	req.Header.Add(httputils.HeaderContentType, "application/octet-stream")
+	req.Header.Add(httpx.HeaderAccept, httpx.MediaTypeJson)
+	req.Header.Add(httpx.HeaderContentType, "application/octet-stream")
 	req.Header.Add("AccessKey", apiKey)
 
 	res, err := client.httpClient.Do(req)

@@ -18,14 +18,14 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/bloom42/stdx/httputils"
+	"github.com/bloom42/stdx/httpx"
+	"github.com/bloom42/stdx/log/slogx"
 	"github.com/bloom42/stdx/semver"
-	"github.com/bloom42/stdx/slogutil"
 	"github.com/bloom42/stdx/zign"
 )
 
 func (updater *Updater) CheckUpdate(ctx context.Context) (manifest ChannelManifest, err error) {
-	logger := slogutil.FromCtx(ctx)
+	logger := slogx.FromCtx(ctx)
 
 	manifestUrl := fmt.Sprintf("%s/%s.json", updater.baseUrl, updater.releaseChannel)
 
@@ -37,8 +37,8 @@ func (updater *Updater) CheckUpdate(ctx context.Context) (manifest ChannelManife
 		return
 	}
 
-	req.Header.Add(httputils.HeaderAccept, httputils.MediaTypeJson)
-	req.Header.Add(httputils.HeaderUserAgent, updater.userAgent)
+	req.Header.Add(httpx.HeaderAccept, httpx.MediaTypeJson)
+	req.Header.Add(httpx.HeaderUserAgent, updater.userAgent)
 
 	res, err := updater.httpClient.Do(req)
 	if err != nil {
@@ -257,7 +257,7 @@ func (updater *Updater) extractZipArchive(dataReader io.ReaderAt, dataLen int64,
 }
 
 func (updater *Updater) fetchZignManifest(ctx context.Context, channelManifest ChannelManifest) (zignManifest zign.Manifest, err error) {
-	logger := slogutil.FromCtx(ctx)
+	logger := slogx.FromCtx(ctx)
 
 	zignManifestUrl := fmt.Sprintf("%s/%s/zign.json", updater.baseUrl, channelManifest.Version)
 
@@ -269,8 +269,8 @@ func (updater *Updater) fetchZignManifest(ctx context.Context, channelManifest C
 		return
 	}
 
-	req.Header.Add(httputils.HeaderAccept, httputils.MediaTypeJson)
-	req.Header.Add(httputils.HeaderUserAgent, updater.userAgent)
+	req.Header.Add(httpx.HeaderAccept, httpx.MediaTypeJson)
+	req.Header.Add(httpx.HeaderUserAgent, updater.userAgent)
 
 	res, err := updater.httpClient.Do(req)
 	if err != nil {
