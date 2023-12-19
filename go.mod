@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/yuin/goldmark v1.6.0
 	github.com/zeebo/blake3 v0.2.3
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/image v0.14.0
 	golang.org/x/mod v0.14.0
 	golang.org/x/sys v0.15.0
