@@ -58,9 +58,10 @@ func WebappHandler(folder fs.FS, notFoundFile string, statusNotFound int) (func(
 			fileMetadata = filesMetadata[path]
 			statusCode = statusNotFound
 			cacheControl = CacheControlNoCache
+		} else {
+			w.Header().Set(HeaderETag, fileMetadata.etag)
 		}
 
-		w.Header().Set(HeaderETag, fileMetadata.etag)
 		w.Header().Set(HeaderContentLength, fileMetadata.contentLength)
 		w.Header().Set(HeaderContentType, fileMetadata.contentType)
 		w.Header().Set(HeaderCacheControl, cacheControl)
