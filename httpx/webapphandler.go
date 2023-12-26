@@ -52,16 +52,18 @@ func WebappHandler(folder fs.FS, notFoundFile string, statusNotFound int) (func(
 		statusCode := http.StatusOK
 		path := strings.TrimPrefix(req.URL.Path, "/")
 		fileMetadata, fileExists := filesMetadata[path]
+		cacheControl := fileMetadata.cacheControl
 		if !fileExists {
 			path = notFoundFile
 			fileMetadata = filesMetadata[path]
 			statusCode = statusNotFound
+			cacheControl = CacheControlNoCache
 		}
 
 		w.Header().Set(HeaderETag, fileMetadata.etag)
 		w.Header().Set(HeaderContentLength, fileMetadata.contentLength)
 		w.Header().Set(HeaderContentType, fileMetadata.contentType)
-		w.Header().Set(HeaderCacheControl, fileMetadata.cacheControl)
+		w.Header().Set(HeaderCacheControl, cacheControl)
 
 		requestEtag := cleanRequestEtag(req.Header.Get(HeaderIfNoneMatch))
 		if requestEtag == fileMetadata.etag {
