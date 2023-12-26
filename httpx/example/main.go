@@ -16,7 +16,7 @@ var webapp embed.FS
 func main() {
 	server := http.NewServeMux()
 	webappFS, _ := fs.Sub(webapp, "webapp")
-	webappHandler, err := httpx.WebappHandler(webappFS)
+	webappHandler, err := httpx.WebappHandler(webappFS, "")
 	if err != nil {
 		log.Fatal(err)
 		return

@@ -17,7 +17,7 @@ import (
 var ErrDir = errors.New("path is a folder")
 var ErrInvalidPath = errors.New("path is not valid")
 var ErrInternalError = errors.New("Internal Server Error")
-var errIndexHtmlIsMissing = errors.New("webappHandler: index.html is missing")
+var errFileIsMissing = func(file string) error { return fmt.Errorf("webappHandler: %s is missing", file) }
 
 type fileMetadata struct {
 	contentType string
@@ -28,12 +28,16 @@ type fileMetadata struct {
 }
 
 // WebappHandler is an http.Handler that is designed to efficiently serve Single Page Applications.
-// if a file is not found, it will return index.html
+// if a file is not found, it will return notFoundFile (default: index.html)
 // WebappHandler sets the correct ETag header and cache the hash of files so that repeated requests
 // to files return only StatusNotModified responses
 // WebappHandler returns StatusMethodNotAllowed if the method is different than GET or HEAD
-func WebappHandler(folder fs.FS) (func(w http.ResponseWriter, r *http.Request), error) {
-	filesMetadata, err := loadFilesMetdata(folder)
+func WebappHandler(folder fs.FS, notFoundFile string) (func(w http.ResponseWriter, r *http.Request), error) {
+	if notFoundFile == "" {
+		notFoundFile = "index.html"
+	}
+
+	filesMetadata, err := loadFilesMetdata(folder, notFoundFile)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +52,7 @@ func WebappHandler(folder fs.FS) (func(w http.ResponseWriter, r *http.Request), 
 		path := strings.TrimPrefix(req.URL.Path, "/")
 		fileMetadata, fileExists := filesMetadata[path]
 		if !fileExists {
-			path = "index.html"
+			path = notFoundFile
 			fileMetadata = filesMetadata[path]
 		}
 
@@ -93,7 +97,7 @@ func cleanRequestEtag(requestEtag string) string {
 	return strings.TrimPrefix(strings.TrimSpace(requestEtag), "W/")
 }
 
-func loadFilesMetdata(folder fs.FS) (ret map[string]fileMetadata, err error) {
+func loadFilesMetdata(folder fs.FS, notFoundFile string) (ret map[string]fileMetadata, err error) {
 	ret = make(map[string]fileMetadata, 10)
 
 	err = fs.WalkDir(folder, ".", func(path string, fileEntry fs.DirEntry, errWalk error) error {
@@ -148,8 +152,8 @@ func loadFilesMetdata(folder fs.FS) (ret map[string]fileMetadata, err error) {
 		return nil
 	})
 
-	if _, indexHtmlExists := ret["index.html"]; !indexHtmlExists {
-		err = errIndexHtmlIsMissing
+	if _, indexHtmlExists := ret[notFoundFile]; !indexHtmlExists {
+		err = errFileIsMissing(notFoundFile)
 		return
 	}
 
