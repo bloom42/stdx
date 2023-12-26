@@ -3,16 +3,14 @@ package httpx
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"strconv"
 	"testing"
-	"unsafe"
 )
 
-func TestWebapphandlerTypes(t *testing.T) {
-	var fileInfo webappFileInfo
-	fmt.Printf("size(webappFileInfo): %d\n", unsafe.Sizeof(fileInfo))
-}
+// func TestWebapphandlerTypes(t *testing.T) {
+// 	var fileInfo webappFileInfo
+// 	fmt.Printf("size(webappFileInfo): %d\n", unsafe.Sizeof(fileInfo))
+// }
 
 func TestEncodeEtagOptimized(t *testing.T) {
 	elems := []struct {
