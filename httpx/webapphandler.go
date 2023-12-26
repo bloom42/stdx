@@ -67,7 +67,7 @@ func WebappHandler(folder fs.FS, notFoundFile string, statusNotFound int) (func(
 		w.Header().Set(HeaderCacheControl, cacheControl)
 
 		requestEtag := cleanRequestEtag(req.Header.Get(HeaderIfNoneMatch))
-		if requestEtag == fileMetadata.etag {
+		if fileExists && requestEtag == fileMetadata.etag {
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
