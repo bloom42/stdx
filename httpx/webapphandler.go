@@ -28,7 +28,7 @@ type fileMetadata struct {
 }
 
 // WebappHandler is an http.Handler that is designed to efficiently serve Single Page Applications.
-// if a file is not found, it will return notFoundFile (default: index.html)
+// if a file is not found, it will return notFoundFile (default: index.html) with the stauscode statusNotFound
 // WebappHandler sets the correct ETag header and cache the hash of files so that repeated requests
 // to files return only StatusNotModified responses
 // WebappHandler returns StatusMethodNotAllowed if the method is different than GET or HEAD
