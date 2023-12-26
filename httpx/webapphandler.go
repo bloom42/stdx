@@ -32,7 +32,7 @@ type fileMetadata struct {
 // WebappHandler sets the correct ETag header and cache the hash of files so that repeated requests
 // to files return only StatusNotModified responses
 // WebappHandler returns StatusMethodNotAllowed if the method is different than GET or HEAD
-func WebappHandler(folder fs.FS, notFoundFile string) (func(w http.ResponseWriter, r *http.Request), error) {
+func WebappHandler(folder fs.FS, notFoundFile string, statusNotFound int) (func(w http.ResponseWriter, r *http.Request), error) {
 	if notFoundFile == "" {
 		notFoundFile = "index.html"
 	}
@@ -49,11 +49,13 @@ func WebappHandler(folder fs.FS, notFoundFile string) (func(w http.ResponseWrite
 			return
 		}
 
+		statusCode := http.StatusOK
 		path := strings.TrimPrefix(req.URL.Path, "/")
 		fileMetadata, fileExists := filesMetadata[path]
 		if !fileExists {
 			path = notFoundFile
 			fileMetadata = filesMetadata[path]
+			statusCode = statusNotFound
 		}
 
 		w.Header().Set(HeaderETag, fileMetadata.etag)
@@ -67,6 +69,7 @@ func WebappHandler(folder fs.FS, notFoundFile string) (func(w http.ResponseWrite
 			return
 		}
 
+		w.WriteHeader(statusCode)
 		err = sendFile(folder, path, w)
 		if err != nil {
 			w.Header().Set(HeaderCacheControl, CacheControlNoCache)
