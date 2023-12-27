@@ -28,7 +28,7 @@ type fileMetadata struct {
 	cacheControl  string
 }
 
-type Config struct {
+type WebappHandlerConfig struct {
 	FileNotFound             string
 	StatusNotFound           int
 	ImmutableFilesExtensions []string
@@ -39,8 +39,8 @@ type Config struct {
 // WebappHandler sets the correct ETag header and cache the hash of files so that repeated requests
 // to files return only StatusNotModified responses
 // WebappHandler returns StatusMethodNotAllowed if the method is different than GET or HEAD
-func WebappHandler(folder fs.FS, config *Config) (func(w http.ResponseWriter, r *http.Request), error) {
-	defaultConfig := defaultConfig()
+func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (func(w http.ResponseWriter, r *http.Request), error) {
+	defaultConfig := defaultWebappHandlerConfig()
 	if config == nil {
 		config = defaultConfig
 	} else {
@@ -100,8 +100,8 @@ func WebappHandler(folder fs.FS, config *Config) (func(w http.ResponseWriter, r 
 	}, nil
 }
 
-func defaultConfig() *Config {
-	return &Config{
+func defaultWebappHandlerConfig() *WebappHandlerConfig {
+	return &WebappHandlerConfig{
 		FileNotFound:             "index.html",
 		StatusNotFound:           200,
 		ImmutableFilesExtensions: []string{".js", ".css", ".woff", ".woff2"},
@@ -129,7 +129,7 @@ func cleanRequestEtag(requestEtag string) string {
 	return strings.TrimPrefix(strings.TrimSpace(requestEtag), "W/")
 }
 
-func loadFilesMetdata(folder fs.FS, config *Config) (ret map[string]fileMetadata, err error) {
+func loadFilesMetdata(folder fs.FS, config *WebappHandlerConfig) (ret map[string]fileMetadata, err error) {
 	ret = make(map[string]fileMetadata, 10)
 
 	err = fs.WalkDir(folder, ".", func(path string, fileEntry fs.DirEntry, errWalk error) error {
