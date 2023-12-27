@@ -10,6 +10,7 @@ import (
 	"mime"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -27,17 +28,34 @@ type fileMetadata struct {
 	cacheControl  string
 }
 
+type Config struct {
+	FileNotFound             string
+	StatusNotFound           int
+	ImmutableFilesExtensions []string
+}
+
 // WebappHandler is an http.Handler that is designed to efficiently serve Single Page Applications.
 // if a file is not found, it will return notFoundFile (default: index.html) with the stauscode statusNotFound
 // WebappHandler sets the correct ETag header and cache the hash of files so that repeated requests
 // to files return only StatusNotModified responses
 // WebappHandler returns StatusMethodNotAllowed if the method is different than GET or HEAD
-func WebappHandler(folder fs.FS, notFoundFile string, statusNotFound int) (func(w http.ResponseWriter, r *http.Request), error) {
-	if notFoundFile == "" {
-		notFoundFile = "index.html"
+func WebappHandler(folder fs.FS, config *Config) (func(w http.ResponseWriter, r *http.Request), error) {
+	defaultConfig := defaultConfig()
+	if config == nil {
+		config = defaultConfig
+	} else {
+		if config.FileNotFound == "" {
+			config.FileNotFound = defaultConfig.FileNotFound
+		}
+		if config.StatusNotFound == 0 {
+			config.StatusNotFound = defaultConfig.StatusNotFound
+		}
+		if config.ImmutableFilesExtensions == nil {
+			config.ImmutableFilesExtensions = defaultConfig.ImmutableFilesExtensions
+		}
 	}
 
-	filesMetadata, err := loadFilesMetdata(folder, notFoundFile)
+	filesMetadata, err := loadFilesMetdata(folder, config)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +72,9 @@ func WebappHandler(folder fs.FS, notFoundFile string, statusNotFound int) (func(
 		fileMetadata, fileExists := filesMetadata[path]
 		cacheControl := fileMetadata.cacheControl
 		if !fileExists {
-			path = notFoundFile
+			path = config.FileNotFound
 			fileMetadata = filesMetadata[path]
-			statusCode = statusNotFound
+			statusCode = config.StatusNotFound
 			cacheControl = CacheControlNoCache
 		} else {
 			w.Header().Set(HeaderETag, fileMetadata.etag)
@@ -82,6 +100,14 @@ func WebappHandler(folder fs.FS, notFoundFile string, statusNotFound int) (func(
 	}, nil
 }
 
+func defaultConfig() *Config {
+	return &Config{
+		FileNotFound:             "index.html",
+		StatusNotFound:           200,
+		ImmutableFilesExtensions: []string{".js", ".css", ".woff", ".woff2"},
+	}
+}
+
 func sendFile(folder fs.FS, path string, w http.ResponseWriter) (err error) {
 	file, err := folder.Open(path)
 	if err != nil {
@@ -103,7 +129,7 @@ func cleanRequestEtag(requestEtag string) string {
 	return strings.TrimPrefix(strings.TrimSpace(requestEtag), "W/")
 }
 
-func loadFilesMetdata(folder fs.FS, notFoundFile string) (ret map[string]fileMetadata, err error) {
+func loadFilesMetdata(folder fs.FS, config *Config) (ret map[string]fileMetadata, err error) {
 	ret = make(map[string]fileMetadata, 10)
 
 	err = fs.WalkDir(folder, ".", func(path string, fileEntry fs.DirEntry, errWalk error) error {
@@ -141,11 +167,11 @@ func loadFilesMetdata(folder fs.FS, notFoundFile string) (ret map[string]fileMet
 
 		// the cacheControl value depends on the type of the file
 		cacheControl := CacheControlDynamic
-		switch extension {
-		case ".js", ".css", ".woff", ".woff2":
-			// some webapp's assets files can be cached for very long time because they are versionned by
-			// the webapp's bundler
+		// some webapp's assets files can be cached for very long time because they are versionned by
+		// the webapp's bundler
+		if slices.Contains(config.ImmutableFilesExtensions, extension) {
 			cacheControl = CacheControlImmutable
+
 		}
 
 		ret[path] = fileMetadata{
@@ -158,8 +184,8 @@ func loadFilesMetdata(folder fs.FS, notFoundFile string) (ret map[string]fileMet
 		return nil
 	})
 
-	if _, indexHtmlExists := ret[notFoundFile]; !indexHtmlExists {
-		err = errFileIsMissing(notFoundFile)
+	if _, indexHtmlExists := ret[config.FileNotFound]; !indexHtmlExists {
+		err = errFileIsMissing(config.FileNotFound)
 		return
 	}
 
