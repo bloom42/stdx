@@ -29,8 +29,11 @@ type fileMetadata struct {
 }
 
 type WebappHandlerConfig struct {
-	FileNotFound             string
-	StatusNotFound           int
+	// default: index.html
+	FileNotFound string
+	// default: 200
+	StatusNotFound int
+	// default: ".js", ".css", ".woff", ".woff2"
 	ImmutableFilesExtensions []string
 }
 
@@ -171,7 +174,6 @@ func loadFilesMetdata(folder fs.FS, config *WebappHandlerConfig) (ret map[string
 		// the webapp's bundler
 		if slices.Contains(config.ImmutableFilesExtensions, extension) {
 			cacheControl = CacheControlImmutable
-
 		}
 
 		ret[path] = fileMetadata{
