@@ -10,7 +10,7 @@ import (
 	"mime"
 	"net/http"
 	"path/filepath"
-	"slices"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -34,7 +34,13 @@ type WebappHandlerConfig struct {
 	// default: 200
 	StatusNotFound int
 	// default: ".js", ".css", ".woff", ".woff2"
-	ImmutableFilesExtensions []string
+	Cache []CacheRule
+}
+
+type CacheRule struct {
+	Regexp         string
+	compiledRegexp *regexp.Regexp
+	CacheControl   string
 }
 
 // WebappHandler is an http.Handler that is designed to efficiently serve Single Page Applications.
@@ -42,7 +48,7 @@ type WebappHandlerConfig struct {
 // WebappHandler sets the correct ETag header and cache the hash of files so that repeated requests
 // to files return only StatusNotModified responses
 // WebappHandler returns StatusMethodNotAllowed if the method is different than GET or HEAD
-func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (func(w http.ResponseWriter, r *http.Request), error) {
+func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (handler func(w http.ResponseWriter, r *http.Request), err error) {
 	defaultConfig := defaultWebappHandlerConfig()
 	if config == nil {
 		config = defaultConfig
@@ -53,8 +59,16 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (func(w http.Respo
 		if config.StatusNotFound == 0 {
 			config.StatusNotFound = defaultConfig.StatusNotFound
 		}
-		if config.ImmutableFilesExtensions == nil {
-			config.ImmutableFilesExtensions = defaultConfig.ImmutableFilesExtensions
+		if config.Cache == nil {
+			config.Cache = defaultConfig.Cache
+		}
+	}
+
+	for i := range config.Cache {
+		config.Cache[i].compiledRegexp, err = regexp.Compile(config.Cache[i].Regexp)
+		if err != nil {
+			err = fmt.Errorf("webappHandler: regexp is not valid: %s", config.Cache[i].Regexp)
+			return
 		}
 	}
 
@@ -63,7 +77,7 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (func(w http.Respo
 		return nil, err
 	}
 
-	return func(w http.ResponseWriter, req *http.Request) {
+	handler = func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodGet && req.Method != http.MethodHead {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			w.Write([]byte("Method not allowed.\n"))
@@ -100,14 +114,26 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (func(w http.Respo
 			handleError(http.StatusInternalServerError, ErrInternalError.Error(), w)
 			return
 		}
-	}, nil
+	}
+	return
 }
 
 func defaultWebappHandlerConfig() *WebappHandlerConfig {
 	return &WebappHandlerConfig{
-		FileNotFound:             "index.html",
-		StatusNotFound:           200,
-		ImmutableFilesExtensions: []string{".js", ".css", ".woff", ".woff2"},
+		FileNotFound:   "index.html",
+		StatusNotFound: 200,
+		Cache: []CacheRule{
+			{
+				// some webapp's assets files can be cached for very long time because they are versionned by
+				// the webapp's bundler
+				Regexp:       ".*\\.(js|css|woff|woff2)$",
+				CacheControl: CacheControlImmutable,
+			},
+			{
+				Regexp:       ".*\\.(jpg|jpeg|png|webp|gif|svg)$",
+				CacheControl: "public, max-age=900, stale-while-revalidate=43200",
+			},
+		},
 	}
 }
 
@@ -170,10 +196,11 @@ func loadFilesMetdata(folder fs.FS, config *WebappHandlerConfig) (ret map[string
 
 		// the cacheControl value depends on the type of the file
 		cacheControl := CacheControlDynamic
-		// some webapp's assets files can be cached for very long time because they are versionned by
-		// the webapp's bundler
-		if slices.Contains(config.ImmutableFilesExtensions, extension) {
-			cacheControl = CacheControlImmutable
+
+		for _, cacheRule := range config.Cache {
+			if cacheRule.compiledRegexp.Match([]byte(path)) {
+				cacheControl = cacheRule.CacheControl
+			}
 		}
 
 		ret[path] = fileMetadata{
