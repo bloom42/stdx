@@ -130,7 +130,7 @@ func defaultWebappHandlerConfig() *WebappHandlerConfig {
 				CacheControl: CacheControlImmutable,
 			},
 			{
-				Regexp:       ".*\\.(jpg|jpeg|png|webp|gif|svg)$",
+				Regexp:       ".*\\.(jpg|jpeg|png|webp|gif|svg|ico)$",
 				CacheControl: "public, max-age=900, stale-while-revalidate=43200",
 			},
 		},
