@@ -30,9 +30,11 @@ type fileMetadata struct {
 
 type WebappHandlerConfig struct {
 	// default: index.html
-	FileNotFound string
+	NotFoundFile string
 	// default: 200
-	StatusNotFound int
+	NotFoundStatus int
+	// default: public, no-cache, must-revalidate
+	NotFoundCacheControl string
 	// default: ".js", ".css", ".woff", ".woff2"
 	Cache []CacheRule
 }
@@ -53,11 +55,14 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (handler func(w ht
 	if config == nil {
 		config = defaultConfig
 	} else {
-		if config.FileNotFound == "" {
-			config.FileNotFound = defaultConfig.FileNotFound
+		if config.NotFoundFile == "" {
+			config.NotFoundFile = defaultConfig.NotFoundFile
 		}
-		if config.StatusNotFound == 0 {
-			config.StatusNotFound = defaultConfig.StatusNotFound
+		if config.NotFoundStatus == 0 {
+			config.NotFoundStatus = defaultConfig.NotFoundStatus
+		}
+		if config.NotFoundCacheControl == "" {
+			config.NotFoundCacheControl = defaultConfig.NotFoundCacheControl
 		}
 		if config.Cache == nil {
 			config.Cache = defaultConfig.Cache
@@ -89,10 +94,10 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (handler func(w ht
 		fileMetadata, fileExists := filesMetadata[path]
 		cacheControl := fileMetadata.cacheControl
 		if !fileExists {
-			path = config.FileNotFound
+			path = config.NotFoundFile
 			fileMetadata = filesMetadata[path]
-			statusCode = config.StatusNotFound
-			cacheControl = CacheControlNoCache
+			statusCode = config.NotFoundStatus
+			cacheControl = config.NotFoundCacheControl
 		} else {
 			w.Header().Set(HeaderETag, fileMetadata.etag)
 		}
@@ -120,8 +125,9 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (handler func(w ht
 
 func defaultWebappHandlerConfig() *WebappHandlerConfig {
 	return &WebappHandlerConfig{
-		FileNotFound:   "index.html",
-		StatusNotFound: 200,
+		NotFoundFile:         "index.html",
+		NotFoundStatus:       200,
+		NotFoundCacheControl: CacheControlDynamic,
 		Cache: []CacheRule{
 			{
 				// some webapp's assets files can be cached for very long time because they are versionned by
@@ -213,8 +219,8 @@ func loadFilesMetdata(folder fs.FS, config *WebappHandlerConfig) (ret map[string
 		return nil
 	})
 
-	if _, indexHtmlExists := ret[config.FileNotFound]; !indexHtmlExists {
-		err = errFileIsMissing(config.FileNotFound)
+	if _, indexHtmlExists := ret[config.NotFoundFile]; !indexHtmlExists {
+		err = errFileIsMissing(config.NotFoundFile)
 		return
 	}
 
