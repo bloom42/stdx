@@ -107,7 +107,7 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (handler func(w ht
 		w.Header().Set(HeaderCacheControl, cacheControl)
 
 		requestEtag := cleanRequestEtag(req.Header.Get(HeaderIfNoneMatch))
-		if fileExists && requestEtag == fileMetadata.etag {
+		if (config.NotFoundStatus == http.StatusOK || fileExists) && requestEtag == fileMetadata.etag {
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
@@ -126,7 +126,7 @@ func WebappHandler(folder fs.FS, config *WebappHandlerConfig) (handler func(w ht
 func defaultWebappHandlerConfig() *WebappHandlerConfig {
 	return &WebappHandlerConfig{
 		NotFoundFile:         "index.html",
-		NotFoundStatus:       200,
+		NotFoundStatus:       http.StatusOK,
 		NotFoundCacheControl: CacheControlDynamic,
 		Cache: []CacheRule{
 			{
